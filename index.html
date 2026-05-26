@@ -1,652 +1,605 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeJournal Ultimate</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #0f172a; color: #E5E7EB; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .input-group { display: flex; flex-direction: column; gap: 0.25rem; }
-        .input-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; }
-        .input-base {
-            background-color: #1e293b; border: 1px solid #334155; color: white;
-            border-radius: 0.5rem; padding: 0.6rem 0.75rem; font-size: 0.875rem;
-            width: 100%; transition: all 0.2s;
-        }
-        .input-base:focus { outline: none; border-color: #6366f1; ring: 2px solid #6366f133; }
-        input[type="datetime-local"], input[type="date"] { font-size: 0.75rem; min-width: 0; }
-        
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
-        .profit-glow { box-shadow: 0 0 15px -3px rgba(34, 197, 94, 0.15); border-left-color: #22c55e !important; }
-        .loss-glow { box-shadow: 0 0 15px -3px rgba(239, 68, 68, 0.15); border-left-color: #ef4444 !important; }
-        
-        .bar-grow { animation: growY 0.5s ease-out forwards; transform-origin: bottom; }
-        .bar-grow-down { animation: growY 0.5s ease-out forwards; transform-origin: top; }
-        @keyframes growY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium TradeJournal - Stocks & Options Psychology Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js CDN for stunning visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide icons CDN for beautiful consistent indicators -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
-    <div id="app" class="flex-grow flex flex-col relative pb-28"></div>
-    <div id="modal-layer" class="hidden relative z-50"></div>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <div class="logo-icon">T</div>
+        <div class="logo-text">TradeJournal</div>
+      </div>
+      
+      <nav>
+        <ul class="nav-menu">
+          <li>
+            <a href="#" class="nav-item active" id="nav-dashboard">
+              <i data-lucide="layout-dashboard"></i>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-journal">
+              <i data-lucide="book-open"></i>
+              Trade Journal
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-calendar">
+              <i data-lucide="calendar"></i>
+              Calendar View
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-yearly">
+              <i data-lucide="award"></i>
+              Yearly Review
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-analytics">
+              <i data-lucide="brain"></i>
+              Psychology Audit
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-settings">
+              <i data-lucide="settings"></i>
+              Settings
+            </a>
+          </li>
+        </ul>
+      </nav>
 
-    <script>
-        // --- CONFIG ---
-        const DB_KEY = 'trade_journal_v24_time_fix';
-        const OPT_COMMISSION = 0.65;
-        const OPT_MULTIPLIER = 100;
-        const STRATEGIES = ['Long Call', 'Long Put', 'Covered Call', 'Cash Secured Put', 'Credit Spread', 'Debit Spread', 'Iron Condor', 'Iron Butterfly', 'Calendar Spread', 'Diagonal Spread', 'Straddle', 'Strangle', 'Stock Long', 'Stock Short'];
+      <div class="user-profile">
+        <div class="user-avatar">TR</div>
+        <div class="user-info">
+          <h4>Pro Trader</h4>
+          <p>Option & Stock Journal</p>
+        </div>
+      </div>
+    </aside>
 
-        // --- STATE ---
-        let trades = [];
-        let viewState = { mode: 'list', activeTradeId: null };
-        let isModalOpen = false;
-        let activeModal = null; 
-        let editingTrade = null;
-        let filterState = { search: '', type: 'all' };
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- DASHBOARD VIEW -->
+      <section id="section-dashboard" class="view-section active">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Trading Dashboard</h1>
+            <p>Welcome back! Here's a breakdown of your stock and option performance.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary" onclick="openImportModal()">
+              <i data-lucide="upload"></i> Import CSV/JSON
+            </button>
+            <button class="btn btn-secondary" onclick="exportCSV()">
+              <i data-lucide="sheet"></i> Export Excel CSV
+            </button>
+            <button class="btn btn-primary" onclick="openAddTradeModal()">
+              <i data-lucide="plus-circle"></i> Log Trade
+            </button>
+          </div>
+        </div>
 
-        // --- UTILS ---
-        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-        const formatMoney = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
-        const formatDate = (d) => d ? new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '---';
-        const toInputDate = (iso) => iso ? iso.substring(0, 16) : '';
-
-        const calculateDTE = (expiryStr) => {
-            if (!expiryStr) return null;
-            return Math.ceil((new Date(expiryStr) - new Date().setHours(0,0,0,0)) / (86400000)); 
-        };
-
-        const calculateDaysHeld = (entryStr, exitStr, isClosed) => {
-            if(!entryStr) return 0;
-            const start = new Date(entryStr);
-            const end = isClosed && exitStr ? new Date(exitStr) : new Date();
-            const days = Math.ceil(Math.abs(end - start) / (86400000)); 
-            return days > 0 ? days : 1; 
-        };
-
-        const calculateMetrics = (t) => {
-            const entry = Number(t.entryPrice) || 0;
-            // Partials Logic:
-            const exits = t.exits || []; // Array of { qty, price, date }
-            const totalQty = Number(t.quantity) || 0;
-            
-            let closedQty = 0;
-            let realizedPnl = 0;
-            let weightedExitPrice = 0;
-            let totalExitComms = 0;
-
-            const mult = t.type === 'Option' ? OPT_MULTIPLIER : 1;
-
-            // Calculate Realized P&L from Exits
-            if (exits.length > 0) {
-                let exitValSum = 0;
-                exits.forEach(e => {
-                    const q = Number(e.qty);
-                    const p = Number(e.price);
-                    closedQty += q;
-                    exitValSum += (q * p);
-                    
-                    // Comm for this exit leg
-                    const legComm = (t.type === 'Option' ? (q * OPT_COMMISSION) : 0);
-                    totalExitComms += legComm;
-
-                    // P&L for this chunk
-                    const diff = t.side === 'Buy' ? (p - entry) : (entry - p);
-                    realizedPnl += (diff * q * mult) - legComm; 
-                });
-                if(closedQty > 0) weightedExitPrice = exitValSum / closedQty;
-            } else {
-                // Legacy Support: Single Exit Price
-                const legacyExit = Number(t.exitPrice) || 0;
-                if (legacyExit > 0) {
-                    closedQty = totalQty;
-                    weightedExitPrice = legacyExit;
-                    const diff = t.side === 'Buy' ? (legacyExit - entry) : (entry - legacyExit);
-                    const legComm = (t.type === 'Option' ? (totalQty * OPT_COMMISSION) : 0);
-                    totalExitComms += legComm;
-                    realizedPnl = (diff * totalQty * mult) - legComm;
-                }
-            }
-
-            // Entry Fees (Always paid on full size)
-            const entryComm = (t.type === 'Option' ? (totalQty * OPT_COMMISSION) : 0);
-            const manualFees = Number(t.fees) || 0;
-            
-            // Adjust Realized P&L to account for PROPORTIONAL entry fees
-            const pctClosed = totalQty > 0 ? (closedQty / totalQty) : 0;
-            realizedPnl -= (entryComm * pctClosed) + (manualFees * pctClosed);
-
-            const remainingQty = totalQty - closedQty;
-            const isClosed = remainingQty <= 0 && totalQty > 0; // Fully closed
-
-            // Unrealized P&L (On remaining Qty)
-            let unrealizedPnl = 0;
-            const current = Number(t.currentMark) || 0;
-            if (remainingQty > 0) {
-                const markPrice = current > 0 ? current : entry;
-                const diff = t.side === 'Buy' ? (markPrice - entry) : (entry - markPrice);
-                // Remaining entry fees
-                const remainingEntryFees = (entryComm * (1-pctClosed)) + (manualFees * (1-pctClosed));
-                unrealizedPnl = (diff * remainingQty * mult) - remainingEntryFees;
-            }
-
-            // Total Fees Paid (Entry + Exits so far)
-            const totalFees = entryComm + manualFees + totalExitComms;
-
-            // Combined P&L for Display (Realized + Paper)
-            const totalPnl = realizedPnl + unrealizedPnl;
-
-            // ROI (Based on Max Invested Capital)
-            const costBasis = (entry * totalQty * mult) + totalFees; 
-            let roi = 0;
-            if (costBasis > 0) roi = (totalPnl / costBasis) * 100;
-
-            // Risk
-            const stopLoss = Number(t.stopLoss) || 0;
-            let risk = Number(t.initialRisk) || 0;
-            if (stopLoss > 0 && entry > 0) {
-                const priceDiff = Math.abs(entry - stopLoss);
-                risk = priceDiff * totalQty * mult;
-            }
-            const riskForCalc = risk > 0 ? risk : 1; 
-            const rMulti = totalPnl / riskForCalc;
-
-            const dte = (t.type === 'Option' && !isClosed) ? calculateDTE(t.expiryDate) : null;
-            const lastExitDate = exits.length ? exits[exits.length-1].date : t.exitDate;
-            const daysHeld = calculateDaysHeld(t.entryDate, lastExitDate, isClosed);
-
-            // Time Pct
-            let totalLifespan = 0, timeElapsedPct = 0;
-            if (t.type === 'Option' && t.expiryDate && t.entryDate) {
-                const start = new Date(t.entryDate).setHours(0,0,0,0);
-                const end = new Date(t.expiryDate).setHours(0,0,0,0);
-                totalLifespan = Math.max(1, Math.ceil((end - start) / 86400000));
-                const held = Math.min(totalLifespan, daysHeld);
-                timeElapsedPct = (held / totalLifespan) * 100;
-            }
-
-            return { 
-                ...t, pnl: totalPnl, realizedPnl, unrealizedPnl, roi, rMulti, totalFees, isClosed, 
-                positionStatus: isClosed ? 'Closed' : (closedQty > 0 ? 'Partial' : 'Open'), 
-                dte, daysHeld, totalLifespan, timeElapsedPct, calculatedRisk: risk,
-                remainingQty, closedQty, weightedExitPrice
-            };
-        };
-
-        // --- DATA ---
-        const loadData = () => {
-            try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]').map(calculateMetrics).sort((a,b) => new Date(b.entryDate) - new Date(a.entryDate)); }
-            catch { return []; }
-        };
-        const saveData = (data) => {
-            trades = data.map(calculateMetrics).sort((a,b) => new Date(b.entryDate) - new Date(a.entryDate));
-            localStorage.setItem(DB_KEY, JSON.stringify(trades));
-            render();
-        };
-
-        // --- ACTIONS ---
-        const setView = (mode, id = null) => { viewState = { mode, activeTradeId: id }; render(); window.scrollTo(0,0); };
-        
-        const openTradeModal = (id = null, rollData = null) => {
-            if (rollData) {
-                editingTrade = { ...getDefaultTrade(), ...rollData, id: generateId(), entryPrice: 0, exitPrice: '', currentMark: '', stopLoss: '', entryDate: new Date().toISOString(), exits: [], notes: `Rolled from Trade ID: ${rollData.id}` };
-            } else if (id) {
-                editingTrade = { ...trades.find(x => x.id === id) };
-                if(!editingTrade.exits) editingTrade.exits = [];
-            } else {
-                editingTrade = getDefaultTrade();
-            }
-            activeModal = 'trade'; isModalOpen = true; render();
-        };
-
-        const openCalculatorModal = () => { activeModal = 'calculator'; isModalOpen = true; render(); };
-        
-        const getDefaultTrade = () => ({
-            id: generateId(), ticker: '', type: 'Stock', side: 'Buy', quantity: 1, entryPrice: 0, exitPrice: '', currentMark: '', stopLoss: '', 
-            entryDate: new Date().toISOString(), exitDate: '', initialRisk: 0, fees: 0, strategy: '', notes: '', optionStrategy: '', expiryDate: '', chartUrl: '', followedPlan: true, exits: []
-        });
-
-        const closeModal = () => { isModalOpen = false; editingTrade = null; activeModal = null; document.getElementById('modal-layer').innerHTML = ''; render(); };
-
-        const saveForm = (e) => {
-            e.preventDefault();
-            const fd = new FormData(e.target);
-            const data = { ...editingTrade };
-            
-            data.followedPlan = document.getElementById('field-followedPlan') ? document.getElementById('field-followedPlan').checked : true;
-
-            for (let [k, v] of fd.entries()) {
-                if (k === 'followedPlan') continue;
-                data[k] = ['quantity','entryPrice','exitPrice','initialRisk','fees','currentMark','stopLoss'].includes(k) ? (v===''? (k==='exitPrice'||k==='currentMark'||k==='stopLoss'?'':0) : Number(v)) : v;
-            }
-            
-            // Handle Legacy Exit Price
-            if (data.exitPrice > 0 && data.exits.length === 0) {
-                data.exits = [{ qty: data.quantity, price: data.exitPrice, date: data.exitDate || new Date().toISOString() }];
-                data.exitPrice = ''; 
-            }
-
-            if (data.ticker) data.ticker = data.ticker.toUpperCase();
-            if (data.type === 'Option' && data.strikePrice) data.strikePrice = data.strikePrice.toUpperCase();
-            if(!data.ticker) return alert("Ticker required");
-            
-            const newTrades = trades.some(x => x.id === data.id) ? trades.map(x => x.id === data.id ? data : x) : [...trades, data];
-            saveData(newTrades);
-            closeModal();
-            if (viewState.mode === 'detail' && viewState.activeTradeId === data.id) render();
-        };
-
-        const addPartialExit = () => {
-            const qty = Number(document.getElementById('partial-qty').value);
-            const price = Number(document.getElementById('partial-price').value);
-            if(!qty || !price) return alert("Enter Quantity and Price");
-            const currentClosed = editingTrade.exits.reduce((s,e) => s + Number(e.qty), 0);
-            const remaining = editingTrade.quantity - currentClosed;
-            if (qty > remaining) return alert(`Cannot close ${qty}. Only ${remaining} remaining.`);
-            editingTrade.exits.push({ qty, price, date: new Date().toISOString() });
-            if (qty === remaining) editingTrade.exitDate = new Date().toISOString();
-            render(); 
-        };
-
-        const removeExit = (idx) => { editingTrade.exits.splice(idx, 1); render(); };
-
-        const updateMark = (id, val) => {
-            const t = trades.find(x => x.id === id);
-            if(t) { t.currentMark = val; saveData(trades); }
-        };
-
-        const performRollover = () => {
-            const exitP = Number(document.getElementById('field-exitPrice').value);
-            const t = editingTrade;
-            const closedSoFar = t.exits.reduce((s,e)=>s+e.qty,0);
-            const remaining = t.quantity - closedSoFar;
-            if (remaining > 0) {
-                if (!exitP) return alert("Enter Exit Price for remaining " + remaining);
-                t.exits.push({ qty: remaining, price: exitP, date: new Date().toISOString() });
-            }
-            t.exitDate = new Date().toISOString();
-            saveData(trades.map(tr => tr.id === t.id ? t : tr));
-            const newLeg = { ticker: t.ticker, type: t.type, optionStrategy: t.optionStrategy, side: t.side === 'Buy' ? 'Sell' : 'Buy', quantity: t.quantity, initialRisk: t.initialRisk, strategy: t.strategy, strikePrice: '' };
-            openTradeModal(null, { ...newLeg, id: t.id, pnl: calculateMetrics(t).pnl }); 
-        };
-
-        const deleteTrade = (id) => { if(confirm("Delete trade?")) { saveData(trades.filter(t => t.id !== id)); if(viewState.mode==='detail') setView('list'); } };
-        const updateFilter = (key, val) => { filterState[key] = val; render(); };
-
-        // --- CALCULATOR ---
-        window.calculatePositionSize = () => {
-            const account = Number(document.getElementById('calc-account').value);
-            const riskPct = Number(document.getElementById('calc-risk').value);
-            const entry = Number(document.getElementById('calc-entry').value);
-            const stop = Number(document.getElementById('calc-stop').value);
-            if(!account || !riskPct || !entry || !stop) return;
-            const riskAmount = account * (riskPct / 100);
-            const priceDiff = Math.abs(entry - stop);
-            const shares = Math.floor(riskAmount / priceDiff);
-            const contracts = Math.floor(riskAmount / (priceDiff * 100));
-            document.getElementById('calc-res-risk').innerText = formatMoney(riskAmount);
-            document.getElementById('calc-res-shares').innerText = isFinite(shares) ? shares : 0;
-            document.getElementById('calc-res-contracts').innerText = isFinite(contracts) ? contracts : 0;
-        };
-
-        // --- CHARTING ---
-        const renderEquityCurve = (ctx) => {
-            const chronological = [...trades].filter(t => t.isClosed).sort((a,b) => new Date(a.exitDate) - new Date(b.exitDate));
-            if(chronological.length < 2) return;
-            let cumPnL = 0;
-            const dataPoints = chronological.map(t => { cumPnL += t.pnl; return { x: new Date(t.exitDate).toLocaleDateString(), y: cumPnL }; });
-            new Chart(ctx, { type: 'line', data: { labels: dataPoints.map(d => d.x), datasets: [{ label: 'Equity', data: dataPoints.map(d => d.y), borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.3, pointRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } } });
-        };
-
-        // --- RENDERERS ---
-        const renderCalculatorModal = () => `
-            <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4 fade-in">
-                <div class="bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl border border-slate-700 flex flex-col">
-                    <div class="p-4 border-b border-slate-700 flex justify-between items-center"><h3 class="text-white font-bold flex items-center gap-2"><i data-lucide="calculator" class="w-5 h-5 text-indigo-400"></i> Position Calculator</h3><button onclick="closeModal()" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button></div>
-                    <div class="p-6 space-y-4">
-                        <div class="grid grid-cols-2 gap-4"><div class="input-group"><label class="input-label">Account $</label><input type="number" id="calc-account" class="input-base" placeholder="10000" oninput="window.calculatePositionSize()"></div><div class="input-group"><label class="input-label">Risk %</label><input type="number" id="calc-risk" class="input-base" placeholder="1" value="1" oninput="window.calculatePositionSize()"></div></div>
-                        <div class="grid grid-cols-2 gap-4"><div class="input-group"><label class="input-label">Entry $</label><input type="number" id="calc-entry" class="input-base" oninput="window.calculatePositionSize()"></div><div class="input-group"><label class="input-label">Stop Loss $</label><input type="number" id="calc-stop" class="input-base" oninput="window.calculatePositionSize()"></div></div>
-                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 mt-4 text-center"><div class="text-xs text-slate-500 uppercase font-bold">Risk Amount</div><div class="text-2xl font-bold text-red-400 mb-2" id="calc-res-risk">$0.00</div><div class="grid grid-cols-2 gap-2 text-sm border-t border-slate-700 pt-2"><div><div class="text-slate-500">Shares</div><div class="font-bold text-white" id="calc-res-shares">0</div></div><div><div class="text-slate-500">Contracts</div><div class="font-bold text-white" id="calc-res-contracts">0</div></div></div></div>
-                    </div>
-                </div>
-            </div>`;
-
-        const renderHistogram = () => {
-            const closedTrades = trades.filter(t => t.isClosed).sort((a,b) => new Date(a.entryDate) - new Date(b.entryDate)); 
-            if (closedTrades.length === 0) return '';
-            const maxVal = Math.max(...closedTrades.map(t => Math.abs(t.pnl))) || 100;
-            const bars = closedTrades.map(t => {
-                const heightPct = (Math.abs(t.pnl) / maxVal) * 100;
-                const isProfit = t.pnl >= 0;
-                const colorClass = isProfit ? 'bg-green-500' : 'bg-red-500';
-                return `<div class="flex flex-col h-full w-4 sm:w-6 group relative cursor-pointer" onclick="setView('detail', '${t.id}')"><div class="h-1/2 w-full flex flex-col justify-end items-center border-b border-slate-700">${isProfit ? `<div style="height: ${heightPct}%;" class="w-full ${colorClass} rounded-t-sm opacity-80 group-hover:opacity-100 transition-all bar-grow"></div>` : ''}</div><div class="h-1/2 w-full flex flex-col justify-start items-center border-t border-slate-700">${!isProfit ? `<div style="height: ${heightPct}%;" class="w-full ${colorClass} rounded-b-sm opacity-80 group-hover:opacity-100 transition-all bar-grow-down"></div>` : ''}</div></div>`;
-            }).join('');
-            return `<div class="mt-4 bg-slate-800 p-4 rounded-xl border border-slate-700 overflow-hidden"><div class="flex justify-between items-center mb-4"><h3 class="text-xs text-slate-500 uppercase font-bold">P&L History</h3><span class="text-[10px] text-slate-600">Scale: ${formatMoney(maxVal)}</span></div><div class="h-40 w-full overflow-x-auto"><div class="h-full flex items-center gap-1 min-w-max px-2">${bars}</div></div></div>`;
-        };
-
-        const renderMetricsBar = () => {
-            const closed = trades.filter(t => t.isClosed);
-            const open = trades.filter(t => !t.isClosed);
-            const realizedPnl = closed.reduce((s,t)=>s+t.pnl,0);
-            const unrealizedPnl = open.reduce((s,t)=>s+t.unrealizedPnl,0);
-            const openRisk = open.reduce((s,t) => s + (t.entryPrice * (t.quantity - t.closedQty) * (t.type==='Option'?100:1)), 0);
-            return `<div class="grid grid-cols-3 gap-2 p-4 bg-slate-900 border-b border-slate-800"><div class="bg-slate-800 p-2 rounded-lg text-center border border-slate-700"><div class="text-[9px] text-slate-500 font-bold uppercase">Realized P&L</div><div class="text-sm font-bold ${realizedPnl>=0?'text-green-400':'text-red-400'}">${formatMoney(realizedPnl)}</div></div><div class="bg-slate-800 p-2 rounded-lg text-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="setView('stats')"><div class="text-[9px] text-indigo-400 font-bold uppercase flex justify-center items-center gap-1">Open P&L <i data-lucide="external-link" class="w-3 h-3"></i></div><div class="text-sm font-bold ${unrealizedPnl>=0?'text-green-400':'text-red-400'}">${formatMoney(unrealizedPnl)}</div></div><div class="bg-slate-800 p-2 rounded-lg text-center border border-slate-700"><div class="text-[9px] text-slate-500 font-bold uppercase">Open Exposure</div><div class="text-sm font-bold text-slate-300">${formatMoney(openRisk)}</div></div></div>`;
-        };
-
-        const createTradeCard = (t) => {
-            const displayPnl = t.isClosed ? t.pnl : t.unrealizedPnl;
-            const pnlClass = displayPnl > 0 ? 'text-green-400' : (displayPnl < 0 ? 'text-red-400' : 'text-slate-400');
-            const roiClass = t.roi > 0 ? 'bg-green-900/30 text-green-300' : (t.roi < 0 ? 'bg-red-900/30 text-red-300' : 'bg-slate-800 text-slate-400');
-            const borderClass = t.isClosed ? 'border-l-4 border-slate-600' : (displayPnl > 0 ? 'border-l-4 profit-glow' : (displayPnl < 0 ? 'border-l-4 loss-glow' : 'border-l-4 border-indigo-500'));
-            
-            let timeBadge = '';
-            // Visual: Time Elapsed Bar and Text
-            if (t.type === 'Option' && t.totalLifespan > 0) {
-                let timeColor = t.timeElapsedPct > 80 ? 'text-red-300 bg-red-900/40' : (t.timeElapsedPct > 50 ? 'text-orange-300 bg-orange-900/40' : 'text-slate-400 bg-slate-800');
-                let barColor = t.timeElapsedPct > 80 ? 'bg-red-500' : (t.timeElapsedPct > 50 ? 'bg-orange-500' : 'bg-indigo-500');
-                
-                timeBadge = `
-                <div class="mt-1 w-full">
-                    <div class="flex justify-between items-center text-[9px] mb-0.5">
-                        <span class="${timeColor} px-1 rounded">Held: ${t.daysHeld}/${t.totalLifespan}d</span>
-                        <span class="text-slate-500">${t.timeElapsedPct.toFixed(0)}%</span>
-                    </div>
-                    <div class="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
-                        <div class="${barColor} h-full" style="width: ${Math.min(t.timeElapsedPct, 100)}%"></div>
-                    </div>
-                </div>`;
-            } else {
-                timeBadge = `<div class="mt-1 text-[10px] text-slate-500">Held ${t.daysHeld} days</div>`;
-            }
-
-            const chartIcon = t.chartUrl ? `<i data-lucide="link" class="w-3 h-3 text-blue-400 ml-1"></i>` : '';
-            const planIcon = !t.followedPlan ? `<i data-lucide="alert-circle" class="w-3 h-3 text-red-400 ml-1"></i>` : '';
-
-            return `
-            <div class="bg-slate-800 mb-3 rounded-xl p-4 ${borderClass} shadow-md relative" onclick="setView('detail', '${t.id}')">
-                <div class="flex justify-between items-start mb-1">
-                    <div>
-                        <span class="text-lg font-bold text-white tracking-wide">${t.ticker}</span>
-                        <span class="text-[10px] text-slate-500 uppercase font-bold ml-1">${t.type}</span>
-                        <span class="text-[10px] ml-2 px-2 py-0.5 rounded-full ${t.isClosed ? 'bg-slate-700 text-slate-300' : 'bg-indigo-900 text-indigo-300'} font-bold uppercase tracking-wider">${t.positionStatus} ${t.remainingQty > 0 ? `(${t.remainingQty} left)` : ''}</span>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold ${pnlClass} text-lg">${formatMoney(displayPnl)}</div>
-                        <div class="text-[10px] px-2 py-0.5 rounded ${roiClass} inline-block font-mono">${t.roi.toFixed(1)}% ROI</div>
-                    </div>
-                </div>
-                ${timeBadge}
-                ${!t.isClosed ? `<div class="flex items-center gap-2 mb-3 mt-2 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50"><span class="text-xs text-slate-400 font-bold uppercase">Mark:</span><input type="number" value="${t.currentMark || ''}" placeholder="${t.entryPrice}" onchange="updateMark('${t.id}', this.value)" onclick="event.stopPropagation()" class="bg-slate-800 border border-slate-600 text-white text-xs rounded px-2 py-1 w-24 focus:border-indigo-500 outline-none text-right font-mono"><span class="text-[10px] text-slate-500 ml-auto italic">Upd P&L</span></div>` : ''}
-                <div class="grid grid-cols-3 gap-y-1 text-xs text-slate-400 mt-2">
-                    <div><span class="text-slate-600 mr-1">ENTRY</span> $${Number(t.entryPrice).toFixed(2)}</div>
-                    <div><span class="text-slate-600 mr-1">EXIT</span> ${t.weightedExitPrice > 0 ? '$'+Number(t.weightedExitPrice).toFixed(2) : '-'}</div>
-                    <div class="text-right flex justify-end items-center gap-1">${chartIcon}${planIcon}</div>
-                    <div class="col-span-3 pt-1 mt-1 border-t border-slate-700/50 flex justify-between">
-                        <span class="text-indigo-300">${t.type==='Option' ? t.optionStrategy : t.strategy || 'No Strategy'}</span>
-                        <span>${formatDate(t.entryDate)}</span>
-                    </div>
-                </div>
-            </div>`;
-        };
-
-        const renderList = () => {
-            let filtered = [...trades];
-            if (filterState.search) { const s = filterState.search.toLowerCase(); filtered = filtered.filter(t => t.ticker.toLowerCase().includes(s) || (t.strategy && t.strategy.toLowerCase().includes(s))); }
-            if (filterState.type === 'open') filtered = filtered.filter(t => !t.isClosed);
-            if (filterState.type === 'win') filtered = filtered.filter(t => t.isClosed && t.pnl > 0);
-            if (filterState.type === 'loss') filtered = filtered.filter(t => t.isClosed && t.pnl <= 0);
-
-            const openTrades = filtered.filter(t => !t.isClosed);
-            const closedTrades = filtered.filter(t => t.isClosed);
-            
-            return `
-            <div class="sticky top-[73px] bg-slate-900/95 backdrop-blur z-20 px-4 py-2 border-b border-slate-800 flex gap-2 overflow-x-auto no-scrollbar">
-                <div class="relative flex-grow min-w-[120px]"><i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-slate-500"></i><input type="text" placeholder="Search..." oninput="updateFilter('search', this.value)" class="w-full bg-slate-800 text-white text-xs rounded-lg py-2 pl-8 pr-2 border border-slate-700 focus:border-indigo-500 outline-none"></div>
-                <button onclick="updateFilter('type', 'all')" class="px-3 py-1 rounded-lg text-xs font-bold border ${filterState.type==='all'?'bg-indigo-600 border-indigo-600 text-white':'border-slate-700 text-slate-400'}">All</button>
-                <button onclick="updateFilter('type', 'open')" class="px-3 py-1 rounded-lg text-xs font-bold border ${filterState.type==='open'?'bg-indigo-600 border-indigo-600 text-white':'border-slate-700 text-slate-400'}">Open</button>
-                <button onclick="updateFilter('type', 'win')" class="px-3 py-1 rounded-lg text-xs font-bold border ${filterState.type==='win'?'bg-green-600 border-green-600 text-white':'border-slate-700 text-slate-400'}">Wins</button>
+        <!-- KPI Metrics Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card" id="kpi-net-profit">
+            <div class="kpi-header">
+              <span class="kpi-title">Net Profit</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="dollar-sign"></i></div>
             </div>
-            <div class="p-4">
-                ${openTrades.length > 0 ? `<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Open (${openTrades.length})</h3>${openTrades.map(createTradeCard).join('')}` : ''}
-                ${closedTrades.length > 0 ? `<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 mt-6">Closed (${closedTrades.length})</h3>${closedTrades.map(createTradeCard).join('')}` : ''}
-                ${filtered.length === 0 ? `<div class="text-center py-20 text-slate-600">No trades found.</div>` : ''}
-            </div>`;
-        };
+            <div class="kpi-value">$0.00</div>
+            <div class="kpi-trend" id="kpi-pnl-trend"></div>
+          </div>
+          <div class="kpi-card" id="kpi-win-rate">
+            <div class="kpi-header">
+              <span class="kpi-title">Win Rate</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="percent"></i></div>
+            </div>
+            <div class="kpi-value">0%</div>
+            <div class="kpi-trend" id="kpi-win-trend"></div>
+          </div>
+          <div class="kpi-card" id="kpi-total-trades">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Trades</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="activity"></i></div>
+            </div>
+            <div class="kpi-value">0</div>
+            <div class="kpi-trend text-muted">Stock / Option split</div>
+          </div>
+          <div class="kpi-card" id="kpi-profit-factor">
+            <div class="kpi-header">
+              <span class="kpi-title">Profit Factor</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="scale"></i></div>
+            </div>
+            <div class="kpi-value">0.00</div>
+            <div class="kpi-trend text-muted">Ratio of gross wins/losses</div>
+          </div>
+        </div>
 
-        const renderStatsView = () => {
-            const closed = trades.filter(t => t.isClosed);
-            const wins = closed.filter(t => t.pnl > 0);
-            const losses = closed.filter(t => t.pnl <= 0);
-            const totalPnL = trades.reduce((s, t) => s + (t.isClosed ? t.pnl : 0), 0);
-            const profitFactor = Math.abs(wins.reduce((s,t)=>s+t.pnl,0) / (losses.reduce((s,t)=>s+t.pnl,0) || 1)).toFixed(2);
-            const avgWin = wins.length ? wins.reduce((s,t)=>s+t.pnl,0)/wins.length : 0;
-            const avgLoss = losses.length ? losses.reduce((s,t)=>s+t.pnl,0)/losses.length : 0;
-            const avgDays = closed.length ? closed.reduce((s,t)=>s+t.daysHeld,0)/closed.length : 0;
-            const bestTrade = closed.length ? closed.reduce((prev, current) => (prev.pnl > current.pnl) ? prev : current) : null;
-            const worstTrade = closed.length ? closed.reduce((prev, current) => (prev.pnl < current.pnl) ? prev : current) : null;
-            const StatCard = (label, val, color='text-white') => `<div class="bg-slate-800 p-3 rounded-xl border border-slate-700"><div class="text-[10px] text-slate-500 uppercase font-bold mb-1">${label}</div><div class="text-lg font-bold ${color}">${val}</div></div>`;
-            setTimeout(() => { const ctx=document.getElementById('equityChart'); if(ctx) renderEquityCurve(ctx); }, 100);
+        <!-- Dashboard Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>Equity Curve (Cumulative P&L)</h3>
+            <div class="chart-container">
+              <canvas id="chart-equity"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Asset Breakdown</h3>
+            <div class="chart-container" style="max-height: 250px;">
+              <canvas id="chart-assets"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>P&L performance by Primary Emotion</h3>
+            <div class="chart-container">
+              <canvas id="chart-emotions"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Strategy & Setup Performance</h3>
+            <div class="chart-container">
+              <canvas id="chart-strategies"></canvas>
+            </div>
+          </div>
+        </div>
 
-            return `
-            <div class="fade-in pb-24">
-                <div class="flex items-center p-4 bg-slate-900 sticky top-0 z-20 shadow-md border-b border-slate-800">
-                    <button onclick="setView('list')" class="flex items-center text-slate-400 hover:text-white"><i data-lucide="arrow-left" class="mr-2 w-5 h-5"></i> Dashboard</button>
-                    <h1 class="ml-auto text-lg font-bold text-white">Analytics</h1>
+        <!-- Automated Developer Unit Testing Panel -->
+        <div class="test-panel">
+          <h3><i data-lucide="shield-check" style="display:inline; vertical-align:-3px; width:18px; margin-right:5px;"></i> Developer Testing Suite</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom: 0.75rem;">This runs an automated suite of units validating trade math, emotional stats matrices, P&L aggregation, and win ratios.</p>
+          <div class="test-console" id="test-console-output">Running tests...</div>
+        </div>
+      </section>
+
+      <!-- JOURNAL LOG VIEW -->
+      <section id="section-journal" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Trade Journal</h1>
+            <p>Drill down into individual entries, emotional states, and technical notes.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary" onclick="openImportModal()">
+              <i data-lucide="upload"></i> Import CSV/JSON
+            </button>
+            <button class="btn btn-secondary" onclick="exportCSV()">
+              <i data-lucide="sheet"></i> Export Excel CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportData()">
+              <i data-lucide="download"></i> Export JSON
+            </button>
+            <button class="btn btn-primary" onclick="openAddTradeModal()">
+              <i data-lucide="plus-circle"></i> Log Trade
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="journal-filters">
+          <div class="search-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="filter-search" class="form-control search-input" placeholder="Search symbol...">
+          </div>
+          <select id="filter-asset" class="form-control" style="width: auto;">
+            <option value="all">All Assets</option>
+            <option value="stock">Stock Only</option>
+            <option value="option">Option Only</option>
+          </select>
+          <select id="filter-status" class="form-control" style="width: auto;">
+            <option value="all">All Outcoms</option>
+            <option value="win">Wins Only</option>
+            <option value="loss">Losses Only</option>
+          </select>
+          <select id="filter-emotion" class="form-control" style="width: auto;">
+            <option value="all">All Emotions</option>
+            <option value="Calm">Calm</option>
+            <option value="FOMO">FOMO</option>
+            <option value="Greed">Greed</option>
+            <option value="Fear">Fear</option>
+            <option value="Stressed">Stressed</option>
+            <option value="Neutral">Neutral</option>
+          </select>
+        </div>
+
+        <!-- Journal Entries Grid/Table -->
+        <div class="journal-table-container">
+          <table class="journal-table">
+            <thead>
+              <tr>
+                <th>Dates (In/Out)</th>
+                <th>DIT / DTE</th>
+                <th>Asset</th>
+                <th>Ticker</th>
+                <th>Action</th>
+                <th>Qty</th>
+                <th>Entry / Exit</th>
+                <th>Stop Loss & R:R</th>
+                <th>Gross P&L</th>
+                <th>Emotion (Pre/Post)</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="journal-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+          <div id="journal-empty" class="empty-state" style="display: none;">
+            <div class="empty-state-icon"><i data-lucide="folder-open" style="width:48px; height:48px;"></i></div>
+            <h3>No Trades Logged Yet</h3>
+            <p>Your trade records will display here. Make your first entry to begin!</p>
+            <button class="btn btn-primary" onclick="openAddTradeModal()">Log Trade Now</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PSYCHOLOGY AUDIT VIEW -->
+      <section id="section-analytics" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Psychological Trading Audit</h1>
+            <p>Identify emotional leaks and cognitive biases undermining your performance.</p>
+          </div>
+        </div>
+
+        <div class="analytics-grid">
+          <!-- Algorithmic Insights -->
+          <div class="audit-card">
+            <h3>Algorithmic Psychological Audit</h3>
+            <div id="audit-insights-container">
+              <!-- Dynamically populated based on emotional performance analysis -->
+            </div>
+          </div>
+
+          <!-- Quick Statistics -->
+          <div class="audit-card">
+            <h3>Emotional Correlation Analysis</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 1.5rem;">A breakdown of how pre-trade emotions directly correlate to eventual trade outcome values.</p>
+            <div id="emotional-correlation-list" style="display:flex; flex-direction:column; gap:1rem;">
+              <!-- Dynamically populated with mini metrics bars -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TradeStation Performance Panel -->
+        <div class="audit-card" style="margin-top: 1.5rem;">
+          <h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="gauge"></i> TradeStation Institutional Performance Metrics</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 1.5rem;">Professional trade metrics to assess strategy scaling and risk metrics.</p>
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 0;">
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Payoff Ratio (Avg Win / Avg Loss)</span>
+              <div class="kpi-value" id="ts-payoff-ratio" style="font-size: 1.5rem; margin-top: 0.5rem;">0.00</div>
+              <small class="text-muted" style="font-size:0.7rem;">Ideal payoff ratio is > 1.50</small>
+            </div>
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Long vs Short Win Rate</span>
+              <div class="kpi-value" id="ts-long-short-wr" style="font-size: 1.5rem; margin-top: 0.5rem;">0% / 0%</div>
+              <small class="text-muted" style="font-size:0.7rem;">Buy / Short breakout ratio</small>
+            </div>
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Max Win/Loss Consecutive Streaks</span>
+              <div class="kpi-value" id="ts-streaks" style="font-size: 1.5rem; margin-top: 0.5rem;">0 wins / 0 losses</div>
+              <small class="text-muted" style="font-size:0.7rem;">Longest continuous runs</small>
+            </div>
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Profit Factor (Gross Win/Loss)</span>
+              <div class="kpi-value" id="ts-profit-factor" style="font-size: 1.5rem; margin-top: 0.5rem;">0.00</div>
+              <small class="text-muted" style="font-size:0.7rem;">Gross returns scaling ratio</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDAR VIEW -->
+      <section id="section-calendar" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1 id="calendar-title-header">Daily P&L Calendar</h1>
+            <p>Monthly visualizer highlighting profitable and losing days.</p>
+          </div>
+          <div class="header-actions" style="align-items: center; gap: 0.50rem;">
+            <button class="btn btn-secondary" id="btn-prev-month"><i data-lucide="chevron-left"></i> Prev</button>
+            <span id="calendar-month-year-label" style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem; min-width: 120px; text-align: center;">May 2026</span>
+            <button class="btn btn-secondary" id="btn-next-month">Next <i data-lucide="chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start;">
+          <div class="audit-card" style="padding: 1.5rem;">
+            <div class="calendar-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">
+              <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+            <div id="calendar-days-grid" class="calendar-days-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="kpi-card" id="calendar-month-pnl-card" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <span class="kpi-title" style="margin-bottom: 1rem;">Month Total P&L</span>
+            <div class="kpi-value" id="calendar-month-pnl-value" style="font-size: 2.2rem;">$0.00</div>
+            <div class="kpi-trend" id="calendar-month-pnl-trend" style="margin-top: 1rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- YEARLY REVIEW VIEW -->
+      <section id="section-yearly" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1 id="yearly-title-header">Yearly Performance Review</h1>
+            <p>12-month aggregated P&L scorecards.</p>
+          </div>
+          <div class="header-actions" style="align-items: center; gap: 0.50rem;">
+            <button class="btn btn-secondary" id="btn-prev-year"><i data-lucide="chevron-left"></i> Prev</button>
+            <span id="calendar-year-label" style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem;">2026</span>
+            <button class="btn btn-secondary" id="btn-next-year">Next <i data-lucide="chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start;">
+          <div id="yearly-months-grid" class="yearly-months-grid">
+            <!-- Rendered dynamically as 12 month cards -->
+          </div>
+
+          <div class="kpi-card" id="yearly-total-pnl-card" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <span class="kpi-title" style="margin-bottom: 1rem;">Year Total P&L</span>
+            <div class="kpi-value" id="yearly-total-pnl-value" style="font-size: 2.2rem;">$0.00</div>
+            <div class="kpi-trend" id="yearly-total-pnl-trend" style="margin-top: 1rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS VIEW -->
+      <section id="section-settings" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Centralized Settings</h1>
+            <p>Configure dynamic parameters and default commission rates.</p>
+          </div>
+        </div>
+
+        <div class="audit-card" style="max-width: 600px;">
+          <form id="form-settings" onsubmit="saveSettings(event)">
+            <div class="form-grid" style="grid-template-columns: 1fr; gap: 1.5rem;">
+              <div class="form-group">
+                <label for="settings-stock-comm">Stock Commission (per share)</label>
+                <div class="input-group">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="settings-stock-comm" class="form-control input-with-prefix" step="0.001" min="0" placeholder="0.00">
                 </div>
-                <div class="p-4 space-y-4">
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700"><h3 class="text-xs text-slate-500 uppercase font-bold mb-2">Equity Curve</h3><div class="h-48 w-full"><canvas id="equityChart"></canvas></div></div>
-                    <h3 class="text-xs text-slate-400 font-bold uppercase mt-6 ml-1">System Health</h3>
-                    <div class="grid grid-cols-2 gap-3">${StatCard('Net P&L', formatMoney(totalPnL), totalPnL>=0?'text-green-400':'text-red-400')}${StatCard('Profit Factor', profitFactor, 'text-indigo-400')}${StatCard('Avg Win', formatMoney(avgWin), 'text-green-400')}${StatCard('Avg Loss', formatMoney(avgLoss), 'text-red-400')}${StatCard('Avg Days Held', avgDays.toFixed(1)+'d', 'text-slate-200')}${StatCard('Total Trades', trades.length, 'text-slate-200')}</div>
-                    ${renderHistogram()}
-                </div>
-            </div>`;
-        };
+                <small style="color: var(--text-dim);">Dynamic rate applied when logging standard stocks.</small>
+              </div>
 
-        const renderDetailView = () => {
-            const t = trades.find(x => x.id === viewState.activeTradeId);
-            if (!t) return setView('list'); 
-            const displayPnl = t.isClosed ? t.pnl : t.unrealizedPnl;
-            const pnlColor = displayPnl > 0 ? 'text-green-400' : (displayPnl < 0 ? 'text-red-400' : 'text-slate-400');
-            const bgGradient = displayPnl > 0 ? 'from-green-900/20' : (displayPnl < 0 ? 'from-red-900/20' : 'from-slate-800/20');
+              <div class="form-group">
+                <label for="settings-option-comm">Option Commission (per contract)</label>
+                <div class="input-group">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="settings-option-comm" class="form-control input-with-prefix" step="0.01" min="0" placeholder="0.65">
+                </div>
+                <small style="color: var(--text-dim);">Dynamic rate applied per standard option contract (1 contract = 100 shares multiplier).</small>
+              </div>
+
+              <div style="margin-top: 1rem;">
+                <button type="submit" class="btn btn-success"><i data-lucide="save"></i> Save Settings</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- TRADE LOGGING MODAL -->
+  <div class="modal-overlay" id="modal-trade">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-trade-title">Log New Trade</h2>
+        <button class="btn-close" onclick="closeAddTradeModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-trade" onsubmit="saveTrade(event)">
+        <input type="hidden" id="trade-id">
+        <div class="modal-body">
+          <div class="form-grid">
             
-            const exitsList = (t.exits || []).map(e => 
-                `<div class="flex justify-between text-xs text-slate-400 border-b border-slate-700 py-1"><span>${formatDate(e.date)}</span><span>Sold ${e.qty} @ ${formatMoney(e.price)}</span></div>`
-            ).join('');
+            <!-- Asset Class Type Switcher -->
+            <div class="form-group full-width">
+              <label>Asset Class</label>
+              <div class="form-toggle-buttons">
+                <div class="toggle-btn active" id="btn-asset-stock" onclick="setFormAsset('stock')">STOCK</div>
+                <div class="toggle-btn" id="btn-asset-option" onclick="setFormAsset('option')">OPTION</div>
+              </div>
+              <input type="hidden" id="trade-asset" value="stock">
+            </div>
 
-            let timeBarHtml = '';
-            if (t.type === 'Option' && t.totalLifespan > 0) {
-                const pct = Math.min(100, t.timeElapsedPct).toFixed(0);
-                const barColor = pct > 80 ? 'bg-red-500' : (pct > 50 ? 'bg-orange-500' : 'bg-indigo-500');
-                timeBarHtml = `<div class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4"><div class="flex justify-between text-xs text-slate-400 mb-2"><span class="font-bold uppercase">Time Elapsed</span><span>${t.daysHeld} / ${t.totalLifespan} Days (${pct}%)</span></div><div class="w-full bg-slate-700 rounded-full h-2.5"><div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div></div></div>`;
-            }
+            <!-- Action Switcher (Buy/Sell) -->
+            <div class="form-group">
+              <label>Direction</label>
+              <div class="form-toggle-buttons">
+                <div class="toggle-btn buy active" id="btn-action-buy" onclick="setFormAction('buy')">BUY (LONG)</div>
+                <div class="toggle-btn sell" id="btn-action-sell" onclick="setFormAction('sell')">SELL (SHORT)</div>
+              </div>
+              <input type="hidden" id="trade-action" value="buy">
+            </div>
 
-            return `
-            <div class="fade-in pb-24">
-                <div class="flex justify-between items-center p-4 bg-slate-900 sticky top-0 z-20 shadow-md border-b border-slate-800">
-                    <button onclick="setView('list')" class="flex items-center text-slate-400 hover:text-white"><i data-lucide="arrow-left" class="mr-1 w-5 h-5"></i> Back</button>
-                    <div class="flex gap-4">
-                        <button onclick="openTradeModal('${t.id}')" class="text-indigo-400 hover:text-white"><i data-lucide="edit" class="w-5 h-5"></i></button>
-                        <button onclick="deleteTrade('${t.id}')" class="text-red-400 hover:text-white"><i data-lucide="trash" class="w-5 h-5"></i></button>
-                    </div>
-                </div>
-                <div class="bg-gradient-to-b ${bgGradient} to-slate-900 p-8 text-center border-b border-slate-800">
-                    <h1 class="text-4xl font-black ${pnlColor} mb-1">${formatMoney(displayPnl)}</h1>
-                    <div class="inline-block px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-sm font-mono ${pnlColor}">${t.roi.toFixed(2)}% ROI ${!t.isClosed ? '(Open)' : ''}</div>
-                    <div class="mt-4 flex justify-center gap-2 items-center"><span class="text-2xl font-bold text-white tracking-wide">${t.ticker}</span><span class="px-2 py-0.5 bg-slate-700 rounded text-xs font-bold text-slate-300 uppercase">${t.type}</span><span class="px-2 py-0.5 ${t.isClosed ? 'bg-slate-700' : 'bg-indigo-600'} rounded text-xs font-bold text-white uppercase">${t.positionStatus}</span></div>
-                </div>
-                <div class="p-4">
-                    ${timeBarHtml}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div class="text-xs text-slate-500 uppercase font-bold mb-2 pb-1 border-b border-slate-700">Entry</div>
-                            <div class="flex justify-between mb-1"><span class="text-slate-400 text-sm">Price</span> <span class="text-white font-mono">$${Number(t.entryPrice).toFixed(2)}</span></div>
-                            <div class="flex justify-between mb-1"><span class="text-slate-400 text-sm">Qty</span> <span class="text-white font-mono">${t.quantity}</span></div>
-                            <div class="flex justify-between"><span class="text-slate-400 text-sm">Date</span> <span class="text-white text-xs text-right">${formatDate(t.entryDate)}</span></div>
-                        </div>
-                        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div class="text-xs text-slate-500 uppercase font-bold mb-2 pb-1 border-b border-slate-700">Status</div>
-                            <div class="flex justify-between mb-1"><span class="text-slate-400 text-sm">Avg Exit</span> <span class="text-white font-mono">${t.weightedExitPrice ? '$'+Number(t.weightedExitPrice).toFixed(2) : '-'}</span></div>
-                            <div class="flex justify-between mb-1"><span class="text-slate-400 text-sm">Held</span> <span class="text-white font-mono">${t.daysHeld}d</span></div>
-                            <div class="flex justify-between"><span class="text-slate-400 text-sm">Left</span> <span class="text-white text-xs text-right">${t.remainingQty}</span></div>
-                        </div>
-                    </div>
-                    
-                    ${exitsList ? `<div class="bg-slate-800 p-4 rounded-xl border border-slate-700 mt-4"><div class="text-xs text-slate-500 uppercase font-bold mb-2">Partial Exits</div>${exitsList}</div>` : ''}
-                </div>
-                <div class="px-4 space-y-4">
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-slate-400 text-sm">Strategy</span><span class="text-indigo-300 font-bold">${t.type==='Option' ? t.optionStrategy : (t.strategy || 'N/A')}</span></div>
-                    ${t.type === 'Option' ? `<div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center"><span class="text-slate-400 text-sm">Expires</span><span class="text-white font-bold">${t.expiryDate || 'N/A'}</span></div>` : ''}
-                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700"><div class="text-xs text-slate-500 uppercase font-bold mb-2">Notes</div><p class="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">${t.notes || 'No notes.'}</p></div>
-                </div>
-            </div>`;
-        };
+            <!-- Ticker Symbol -->
+            <div class="form-group">
+              <label for="trade-symbol">Symbol / Ticker</label>
+              <input type="text" id="trade-symbol" class="form-control" placeholder="e.g. AAPL" required uppercase>
+            </div>
 
-        // --- RENDER MAIN ---
-        const render = () => {
-            lucide.createIcons();
-            const app = document.getElementById('app');
-            const modal = document.getElementById('modal-layer');
+            <!-- Option details (Conditional) -->
+            <div class="form-group option-field" style="display: none;">
+              <label for="trade-option-type">Option Type</label>
+              <select id="trade-option-type" class="form-control">
+                <option value="call">Call</option>
+                <option value="put">Put</option>
+              </select>
+            </div>
 
-            if (viewState.mode === 'list') {
-                app.innerHTML = `
-                    <header class="bg-slate-900 p-4 flex justify-between items-center sticky top-0 z-30 shadow-lg border-b border-slate-800">
-                        <h1 class="text-xl font-black tracking-tight text-white">Trade<span class="text-indigo-500">Journal</span></h1>
-                        <div class="flex gap-2">
-                            <button onclick="openCalculatorModal()" class="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg shadow border border-slate-700"><i data-lucide="calculator" class="w-5 h-5"></i></button>
-                            <button onclick="setView('stats')" class="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg shadow border border-slate-700"><i data-lucide="line-chart" class="w-5 h-5"></i></button>
-                            <button onclick="openTradeModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow flex gap-2 items-center"><i data-lucide="plus" class="w-4 h-4"></i> New</button>
-                        </div>
-                    </header>
-                    ${renderMetricsBar()}
-                    <main class="p-4">${renderList()}</main>
-                    <footer class="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 p-3 flex justify-around z-40 shadow-2xl">
-                        <button onclick="window.exportJSON()" class="text-slate-400 flex flex-col items-center text-[10px]"><i data-lucide="download" class="w-5 h-5 mb-1"></i>Backup</button>
-                        <button onclick="window.exportCSV()" class="text-slate-400 flex flex-col items-center text-[10px]"><i data-lucide="file-spreadsheet" class="w-5 h-5 mb-1"></i>Excel</button>
-                        <label class="text-slate-400 flex flex-col items-center text-[10px] cursor-pointer"><i data-lucide="upload" class="w-5 h-5 mb-1"></i>Restore<input type="file" hidden onchange="window.importData(this)"></label>
-                    </footer>
-                `;
-            } else if (viewState.mode === 'stats') {
-                app.innerHTML = renderStatsView();
-            } else if (viewState.mode === 'detail') {
-                app.innerHTML = renderDetailView();
-            }
+            <div class="form-group option-field" style="display: none;">
+              <label for="trade-strike">Strike Price</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-strike" class="form-control input-with-prefix" placeholder="e.g. 150" step="0.5">
+              </div>
+            </div>
 
-            if (isModalOpen) {
-                if (activeModal === 'calculator') {
-                    modal.innerHTML = renderCalculatorModal();
-                } else if (activeModal === 'trade') {
-                    const t = editingTrade;
-                    const isOpt = t.type === 'Option';
-                    const isRoll = !(!trades.find(x=>x.id===t.id)) && isOpt && !(Number(t.exitPrice)>0);
-                    const closedSoFar = (t.exits||[]).reduce((s,e)=>s+Number(e.qty),0);
-                    const remaining = t.quantity - closedSoFar;
-                    function isNew(){return !trades.find(x=>x.id===t.id);}
-                    
-                    const partialsList = (t.exits || []).map((e, idx) => `
-                        <div class="flex justify-between items-center text-xs bg-slate-700 p-2 rounded mb-1">
-                            <span>Sold ${e.qty} @ ${formatMoney(e.price)}</span>
-                            <button onclick="removeExit(${idx})" class="text-red-400 hover:text-white"><i data-lucide="trash" class="w-3 h-3"></i></button>
-                        </div>
-                    `).join('');
+            <div class="form-group option-field" style="display: none; grid-column: span 2;">
+              <label for="trade-expiry">Expiry Date</label>
+              <input type="date" id="trade-expiry" class="form-control">
+            </div>
 
-                    modal.innerHTML = `
-                    <div class="fixed inset-0 modal-backdrop flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 fade-in">
-                        <div class="bg-slate-800 w-full sm:max-w-md h-[90vh] sm:h-auto rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col border border-slate-700">
-                            <div class="flex justify-between items-center p-4 border-b border-slate-700">
-                                <h2 class="font-bold text-white text-lg">${isNew() ? 'New Entry' : 'Edit Trade'}</h2>
-                                <button onclick="closeModal()" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
-                            </div>
-                            <div class="overflow-y-auto p-4 flex-1">
-                                <form onsubmit="saveForm(event)" class="flex flex-col gap-4">
-                                    <div class="input-group"><label class="input-label text-indigo-400">Asset Type</label><div class="flex gap-2"><label class="flex-1 cursor-pointer"><input type="radio" name="type" value="Stock" ${t.type==='Stock'?'checked':''} onchange="editingTrade.type=this.value; render()" class="hidden peer"><div class="text-center py-2 rounded-lg border border-slate-600 bg-slate-700 peer-checked:bg-indigo-600 peer-checked:border-indigo-500 text-sm font-bold transition">Stock</div></label><label class="flex-1 cursor-pointer"><input type="radio" name="type" value="Option" ${t.type==='Option'?'checked':''} onchange="editingTrade.type=this.value; render()" class="hidden peer"><div class="text-center py-2 rounded-lg border border-slate-600 bg-slate-700 peer-checked:bg-indigo-600 peer-checked:border-indigo-500 text-sm font-bold transition">Option</div></label></div></div>
-                                    <div class="input-group"><label class="input-label">Ticker</label><input name="ticker" value="${t.ticker}" class="input-base text-lg font-bold uppercase" placeholder="AAPL" required oninput="this.value = this.value.toUpperCase()"></div>
-                                    ${isOpt ? `<div class="grid grid-cols-2 gap-3"><div class="input-group"><label class="input-label">Option Strategy</label><select name="optionStrategy" class="input-base" required><option value="" disabled ${!t.optionStrategy?'selected':''}>Select...</option>${STRATEGIES.map(s => `<option ${t.optionStrategy===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="input-group"><label class="input-label">Strike(s)</label><input name="strikePrice" value="${t.strikePrice||''}" class="input-base" placeholder="150/155"></div></div>` : ''}
-                                    <div class="grid grid-cols-2 gap-3"><div class="input-group"><label class="input-label">Side</label><select name="side" class="input-base"><option ${t.side==='Buy'?'selected':''}>Buy</option><option ${t.side==='Sell'?'selected':''}>Sell</option></select></div><div class="input-group"><label class="input-label">Qty</label><input type="number" name="quantity" value="${t.quantity}" class="input-base" required min="1"></div></div>
-                                    <div class="grid grid-cols-2 gap-3"><div class="input-group"><label class="input-label">Entry $</label><input type="number" name="entryPrice" value="${t.entryPrice}" class="input-base" required step="0.01"></div><div class="input-group"><label class="input-label text-indigo-400">Exit $ (Legacy)</label><input type="number" id="field-exitPrice" name="exitPrice" value="${t.exitPrice}" class="input-base border-indigo-500/50" step="0.01" placeholder="Full Close"></div></div>
-                                    
-                                    ${!isNew() && remaining > 0 ? `
-                                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
-                                            <label class="input-label text-indigo-300 mb-2 block">Manage Exits (Remaining: ${remaining})</label>
-                                            ${partialsList}
-                                            <div class="flex gap-2 mt-2">
-                                                <input type="number" id="partial-qty" class="input-base h-8 text-xs" placeholder="Qty">
-                                                <input type="number" id="partial-price" class="input-base h-8 text-xs" placeholder="Price">
-                                                <button type="button" onclick="addPartialExit()" class="bg-indigo-600 text-white px-3 rounded text-xs font-bold">Add</button>
-                                            </div>
-                                        </div>
-                                    ` : ''}
+            <!-- Shared quantitative metrics -->
+            <div class="form-group">
+              <label for="trade-qty">Quantity</label>
+              <input type="number" id="trade-qty" class="form-control" placeholder="e.g. 10" min="1" step="any" required>
+            </div>
 
-                                    <div class="grid grid-cols-2 gap-3"><div class="input-group"><label class="input-label">Entry Time</label><input type="datetime-local" name="entryDate" value="${toInputDate(t.entryDate)}" class="input-base text-xs w-full" required></div><div class="input-group"><label class="input-label">Exit Time</label><input type="datetime-local" name="exitDate" value="${toInputDate(t.exitDate)}" class="input-base text-xs w-full"></div></div>
-                                    ${isOpt ? `<div class="input-group"><label class="input-label">Expiry</label><input type="date" name="expiryDate" value="${t.expiryDate}" class="input-base" required></div>` : ''}
-                                    <div class="grid grid-cols-2 gap-3"><div class="input-group"><label class="input-label text-indigo-400">Stop Loss $</label><input type="number" name="stopLoss" value="${t.stopLoss}" class="input-base" step="0.01" placeholder="Optional"></div><div class="input-group"><label class="input-label">Risk ($)</label><input type="number" name="initialRisk" value="${t.initialRisk}" class="input-base" step="0.01" placeholder="Manual"></div></div>
-                                    <div class="grid grid-cols-2 gap-3"><div class="input-group"><label class="input-label">Fees ($)</label><input type="number" name="fees" value="${t.fees}" class="input-base" step="0.01"></div><div class="input-group"><label class="input-label">Chart Link</label><input type="url" name="chartUrl" value="${t.chartUrl||''}" class="input-base text-xs" placeholder="https://..."></div></div>
-                                    <div class="flex items-center gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700"><input type="checkbox" id="field-followedPlan" class="w-5 h-5 accent-indigo-500" ${t.followedPlan!==false?'checked':''}><label for="field-followedPlan" class="text-sm text-slate-300 select-none">I followed my trading plan</label></div>
-                                    <div class="input-group"><label class="input-label">Notes</label><textarea name="notes" class="input-base h-24 pt-2" placeholder="Thesis...">${t.notes}</textarea></div>
-                                    <div class="flex flex-col gap-3 mt-4 mb-4">
-                                        ${isRoll ? `<button type="button" onclick="performRollover()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Rollover Position</button>` : ''}
-                                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Save Trade</button>
-                                    </div>
-                                    <input type="hidden" name="id" value="${t.id}">
-                                </form>
-                            </div>
-                        </div>
-                    </div>`;
-                }
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-            lucide.createIcons();
-        };
+            <div class="form-group">
+              <label for="trade-entry-price">Entry Price</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-entry-price" class="form-control input-with-prefix" placeholder="e.g. 120.50" step="0.01" required>
+              </div>
+            </div>
 
-        // EXPORT/IMPORT
-        window.exportJSON = () => {
-            try {
-                if(!trades || !trades.length) return alert("No data to export");
-                const dataStr = JSON.stringify(trades, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = `TradeJournal_${new Date().toISOString().slice(0, 10)}.json`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                showBackupModal(dataStr);
-            } catch(e) { alert("Export failed: " + e.message); }
-        };
-        window.exportCSV = () => {
-            if(!trades.length) return alert("No trades.");
-            const headers = ["Ticker","Type","Side","EntryDate","ExitDate","Entry","Exit","Qty","P&L","R-Mult","Strategy","Notes"];
-            const rows = trades.map(t => [t.ticker, t.type, t.side, t.entryDate, t.exitDate, t.entryPrice, t.exitPrice, t.quantity, t.pnl.toFixed(2), t.rMulti.toFixed(2), t.type==='Option'?t.optionStrategy:t.strategy, t.notes.replace(/,/g, ' ')]);
-            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", `TradeJournal.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        };
-        const showBackupModal = (jsonString) => {
-            const modal = document.getElementById('modal-layer');
-            modal.innerHTML = `
-                <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4 fade-in">
-                    <div class="bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-700 flex flex-col max-h-[80vh]">
-                        <div class="p-4 border-b border-slate-700 flex justify-between items-center"><h3 class="text-white font-bold">Backup Data</h3><button onclick="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button></div>
-                        <div class="p-4 overflow-hidden flex flex-col gap-4 flex-1"><p class="text-sm text-slate-300">File downloading. If failed, copy this:</p><textarea id="backup-text" class="w-full h-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs font-mono text-slate-400 resize-none focus:outline-none focus:border-indigo-500" readonly>${jsonString}</textarea></div>
-                        <div class="p-4 border-t border-slate-700 flex justify-end gap-3"><button onclick="closeModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-bold text-sm">Close</button></div>
-                    </div>
-                </div>`;
-            modal.classList.remove('hidden'); lucide.createIcons();
-        }
-        window.importData = (input) => { 
-            const file = input.files[0]; if(!file) return; 
-            const r = new FileReader(); r.onload = e => { if(confirm("Overwrite data?")) { saveData(JSON.parse(e.target.result)); setView('list'); } }; r.readAsText(file); 
-        };
+            <div class="form-group">
+              <label for="trade-exit-price">Exit Price</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-exit-price" class="form-control input-with-prefix" placeholder="e.g. 132.00" step="0.01" required>
+              </div>
+            </div>
 
-        window.onload = () => { trades = loadData(); render(); };
-    </script>
+            <div class="form-group">
+              <label for="trade-stop-loss">Stop Loss (Risk control)</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-stop-loss" class="form-control input-with-prefix" placeholder="e.g. 115.00" step="0.01">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-fees">Fees & Commissions</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-fees" class="form-control input-with-prefix" placeholder="0.00" step="0.01" value="0">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-date">Entry Date & Time</label>
+              <input type="datetime-local" id="trade-date" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-exit-date">Exit Date & Time</label>
+              <input type="datetime-local" id="trade-exit-date" class="form-control" required>
+            </div>
+
+            <!-- Setup Reason -->
+            <div class="form-group">
+              <label for="trade-strategy">Entry Reason / Setup</label>
+              <select id="trade-strategy" class="form-control">
+                <option value="Breakout">Breakout</option>
+                <option value="Pullback">Pullback</option>
+                <option value="Support/Resistance">Support & Resistance</option>
+                <option value="News/Catalyst">News or Catalyst</option>
+                <option value="Trend Following">Trend Following</option>
+                <option value="FOMO (No Setup)">FOMO / Ad-hoc Setup</option>
+              </select>
+            </div>
+
+            <!-- Psychology metrics -->
+            <div class="form-group">
+              <label for="trade-emotion-pre">Emotion Pre-Trade</label>
+              <select id="trade-emotion-pre" class="form-control">
+                <option value="Calm">Calm & Centered</option>
+                <option value="FOMO">FOMO / Impulsive</option>
+                <option value="Greed">Greedy / Impatient</option>
+                <option value="Fear">Anxious & Fearful</option>
+                <option value="Stressed">Tired or Stressed</option>
+                <option value="Neutral">Neutral</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-emotion-post">Emotion Post-Trade</label>
+              <select id="trade-emotion-post" class="form-control">
+                <option value="Calm">Satisfied & Controlled</option>
+                <option value="FOMO">Stressed / Disappointed</option>
+                <option value="Greed">Excited / Overconfident</option>
+                <option value="Fear">Regretful / Fearful</option>
+                <option value="Stressed">Relieved / Drained</option>
+                <option value="Neutral">Neutral</option>
+              </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group full-width">
+              <label for="trade-notes">Retrospective Notes / Thoughts</label>
+              <textarea id="trade-notes" class="form-control" rows="3" placeholder="Analyze your technical execution and mental state here..."></textarea>
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddTradeModal()">Cancel</button>
+          <button type="submit" class="btn btn-success" id="btn-save-submit">Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- IMPORT MODAL -->
+  <div class="modal-overlay" id="modal-import">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Import Trade Log (CSV / JSON)</h2>
+        <button class="btn-close" onclick="closeImportModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom: 1.5rem;">
+          Upload a <strong>CSV file</strong> (in the exact column format of the Excel Trade Log) or a <strong>JSON backup</strong> to sync your trading records.
+        </p>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="import-file-input">Select CSV or JSON File</label>
+          <input type="file" id="import-file-input" class="form-control" accept=".csv,.json" style="padding: 0.5rem;">
+        </div>
+
+        <div style="text-align: center; margin: 1rem 0; color: var(--text-dim); font-size: 0.8rem; font-weight: 600;">
+          — OR PASTE TEXT CONTENT —
+        </div>
+
+        <div class="form-group">
+          <textarea id="import-json-data" class="form-control" rows="6" placeholder="Paste raw CSV values or JSON data here..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="executeImport()">Import Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application core engine -->
+  <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,9 @@
+{
+  "name": "trade-journal-excel-generator",
+  "version": "1.0.0",
+  "description": "Generate a premium Trade Journal in Excel format using Node.js",
+  "main": "generate_journal.js",
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}
