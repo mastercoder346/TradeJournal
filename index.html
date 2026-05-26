@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium TradeJournal - Stocks & Options Psychology Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js CDN for stunning visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide icons CDN for beautiful consistent indicators -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <div class="logo-icon">T</div>
+        <div class="logo-text">TradeJournal</div>
+      </div>
+      
+      <nav>
+        <ul class="nav-menu">
+          <li>
+            <a href="#" class="nav-item active" id="nav-dashboard">
+              <i data-lucide="layout-dashboard"></i>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-journal">
+              <i data-lucide="book-open"></i>
+              Trade Journal
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-calendar">
+              <i data-lucide="calendar"></i>
+              Calendar View
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-yearly">
+              <i data-lucide="award"></i>
+              Yearly Review
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-analytics">
+              <i data-lucide="brain"></i>
+              Psychology Audit
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" id="nav-settings">
+              <i data-lucide="settings"></i>
+              Settings
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="user-profile">
+        <div class="user-avatar">TR</div>
+        <div class="user-info">
+          <h4>Pro Trader</h4>
+          <p>Option & Stock Journal</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- DASHBOARD VIEW -->
+      <section id="section-dashboard" class="view-section active">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Trading Dashboard</h1>
+            <p>Welcome back! Here's a breakdown of your stock and option performance.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary" onclick="openImportModal()">
+              <i data-lucide="upload"></i> Import CSV/JSON
+            </button>
+            <button class="btn btn-secondary" onclick="exportCSV()">
+              <i data-lucide="sheet"></i> Export Excel CSV
+            </button>
+            <button class="btn btn-primary" onclick="openAddTradeModal()">
+              <i data-lucide="plus-circle"></i> Log Trade
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Metrics Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card" id="kpi-net-profit">
+            <div class="kpi-header">
+              <span class="kpi-title">Net Profit</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="dollar-sign"></i></div>
+            </div>
+            <div class="kpi-value">$0.00</div>
+            <div class="kpi-trend" id="kpi-pnl-trend"></div>
+          </div>
+          <div class="kpi-card" id="kpi-win-rate">
+            <div class="kpi-header">
+              <span class="kpi-title">Win Rate</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="percent"></i></div>
+            </div>
+            <div class="kpi-value">0%</div>
+            <div class="kpi-trend" id="kpi-win-trend"></div>
+          </div>
+          <div class="kpi-card" id="kpi-total-trades">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Trades</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="activity"></i></div>
+            </div>
+            <div class="kpi-value">0</div>
+            <div class="kpi-trend text-muted">Stock / Option split</div>
+          </div>
+          <div class="kpi-card" id="kpi-profit-factor">
+            <div class="kpi-header">
+              <span class="kpi-title">Profit Factor</span>
+              <div class="kpi-icon-wrapper"><i data-lucide="scale"></i></div>
+            </div>
+            <div class="kpi-value">0.00</div>
+            <div class="kpi-trend text-muted">Ratio of gross wins/losses</div>
+          </div>
+        </div>
+
+        <!-- Dashboard Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>Equity Curve (Cumulative P&L)</h3>
+            <div class="chart-container">
+              <canvas id="chart-equity"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Asset Breakdown</h3>
+            <div class="chart-container" style="max-height: 250px;">
+              <canvas id="chart-assets"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>P&L performance by Primary Emotion</h3>
+            <div class="chart-container">
+              <canvas id="chart-emotions"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Strategy & Setup Performance</h3>
+            <div class="chart-container">
+              <canvas id="chart-strategies"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Automated Developer Unit Testing Panel -->
+        <div class="test-panel">
+          <h3><i data-lucide="shield-check" style="display:inline; vertical-align:-3px; width:18px; margin-right:5px;"></i> Developer Testing Suite</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom: 0.75rem;">This runs an automated suite of units validating trade math, emotional stats matrices, P&L aggregation, and win ratios.</p>
+          <div class="test-console" id="test-console-output">Running tests...</div>
+        </div>
+      </section>
+
+      <!-- JOURNAL LOG VIEW -->
+      <section id="section-journal" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Trade Journal</h1>
+            <p>Drill down into individual entries, emotional states, and technical notes.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary" onclick="openImportModal()">
+              <i data-lucide="upload"></i> Import CSV/JSON
+            </button>
+            <button class="btn btn-secondary" onclick="exportCSV()">
+              <i data-lucide="sheet"></i> Export Excel CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportData()">
+              <i data-lucide="download"></i> Export JSON
+            </button>
+            <button class="btn btn-primary" onclick="openAddTradeModal()">
+              <i data-lucide="plus-circle"></i> Log Trade
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="journal-filters">
+          <div class="search-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="filter-search" class="form-control search-input" placeholder="Search symbol...">
+          </div>
+          <select id="filter-asset" class="form-control" style="width: auto;">
+            <option value="all">All Assets</option>
+            <option value="stock">Stock Only</option>
+            <option value="option">Option Only</option>
+          </select>
+          <select id="filter-status" class="form-control" style="width: auto;">
+            <option value="all">All Outcoms</option>
+            <option value="win">Wins Only</option>
+            <option value="loss">Losses Only</option>
+          </select>
+          <select id="filter-emotion" class="form-control" style="width: auto;">
+            <option value="all">All Emotions</option>
+            <option value="Calm">Calm</option>
+            <option value="FOMO">FOMO</option>
+            <option value="Greed">Greed</option>
+            <option value="Fear">Fear</option>
+            <option value="Stressed">Stressed</option>
+            <option value="Neutral">Neutral</option>
+          </select>
+        </div>
+
+        <!-- Journal Entries Grid/Table -->
+        <div class="journal-table-container">
+          <table class="journal-table">
+            <thead>
+              <tr>
+                <th>Dates (In/Out)</th>
+                <th>DIT / DTE</th>
+                <th>Asset</th>
+                <th>Ticker</th>
+                <th>Action</th>
+                <th>Qty</th>
+                <th>Entry / Exit</th>
+                <th>Stop Loss & R:R</th>
+                <th>Gross P&L</th>
+                <th>Emotion (Pre/Post)</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="journal-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+          <div id="journal-empty" class="empty-state" style="display: none;">
+            <div class="empty-state-icon"><i data-lucide="folder-open" style="width:48px; height:48px;"></i></div>
+            <h3>No Trades Logged Yet</h3>
+            <p>Your trade records will display here. Make your first entry to begin!</p>
+            <button class="btn btn-primary" onclick="openAddTradeModal()">Log Trade Now</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PSYCHOLOGY AUDIT VIEW -->
+      <section id="section-analytics" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Psychological Trading Audit</h1>
+            <p>Identify emotional leaks and cognitive biases undermining your performance.</p>
+          </div>
+        </div>
+
+        <div class="analytics-grid">
+          <!-- Algorithmic Insights -->
+          <div class="audit-card">
+            <h3>Algorithmic Psychological Audit</h3>
+            <div id="audit-insights-container">
+              <!-- Dynamically populated based on emotional performance analysis -->
+            </div>
+          </div>
+
+          <!-- Quick Statistics -->
+          <div class="audit-card">
+            <h3>Emotional Correlation Analysis</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 1.5rem;">A breakdown of how pre-trade emotions directly correlate to eventual trade outcome values.</p>
+            <div id="emotional-correlation-list" style="display:flex; flex-direction:column; gap:1rem;">
+              <!-- Dynamically populated with mini metrics bars -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TradeStation Performance Panel -->
+        <div class="audit-card" style="margin-top: 1.5rem;">
+          <h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="gauge"></i> TradeStation Institutional Performance Metrics</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 1.5rem;">Professional trade metrics to assess strategy scaling and risk metrics.</p>
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 0;">
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Payoff Ratio (Avg Win / Avg Loss)</span>
+              <div class="kpi-value" id="ts-payoff-ratio" style="font-size: 1.5rem; margin-top: 0.5rem;">0.00</div>
+              <small class="text-muted" style="font-size:0.7rem;">Ideal payoff ratio is > 1.50</small>
+            </div>
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Long vs Short Win Rate</span>
+              <div class="kpi-value" id="ts-long-short-wr" style="font-size: 1.5rem; margin-top: 0.5rem;">0% / 0%</div>
+              <small class="text-muted" style="font-size:0.7rem;">Buy / Short breakout ratio</small>
+            </div>
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Max Win/Loss Consecutive Streaks</span>
+              <div class="kpi-value" id="ts-streaks" style="font-size: 1.5rem; margin-top: 0.5rem;">0 wins / 0 losses</div>
+              <small class="text-muted" style="font-size:0.7rem;">Longest continuous runs</small>
+            </div>
+            <div class="kpi-card" style="padding: 1.25rem;">
+              <span class="kpi-title" style="font-size:0.75rem;">Profit Factor (Gross Win/Loss)</span>
+              <div class="kpi-value" id="ts-profit-factor" style="font-size: 1.5rem; margin-top: 0.5rem;">0.00</div>
+              <small class="text-muted" style="font-size:0.7rem;">Gross returns scaling ratio</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDAR VIEW -->
+      <section id="section-calendar" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1 id="calendar-title-header">Daily P&L Calendar</h1>
+            <p>Monthly visualizer highlighting profitable and losing days.</p>
+          </div>
+          <div class="header-actions" style="align-items: center; gap: 0.50rem;">
+            <button class="btn btn-secondary" id="btn-prev-month"><i data-lucide="chevron-left"></i> Prev</button>
+            <span id="calendar-month-year-label" style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem; min-width: 120px; text-align: center;">May 2026</span>
+            <button class="btn btn-secondary" id="btn-next-month">Next <i data-lucide="chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start;">
+          <div class="audit-card" style="padding: 1.5rem;">
+            <div class="calendar-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">
+              <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+            <div id="calendar-days-grid" class="calendar-days-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="kpi-card" id="calendar-month-pnl-card" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <span class="kpi-title" style="margin-bottom: 1rem;">Month Total P&L</span>
+            <div class="kpi-value" id="calendar-month-pnl-value" style="font-size: 2.2rem;">$0.00</div>
+            <div class="kpi-trend" id="calendar-month-pnl-trend" style="margin-top: 1rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- YEARLY REVIEW VIEW -->
+      <section id="section-yearly" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1 id="yearly-title-header">Yearly Performance Review</h1>
+            <p>12-month aggregated P&L scorecards.</p>
+          </div>
+          <div class="header-actions" style="align-items: center; gap: 0.50rem;">
+            <button class="btn btn-secondary" id="btn-prev-year"><i data-lucide="chevron-left"></i> Prev</button>
+            <span id="calendar-year-label" style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem;">2026</span>
+            <button class="btn btn-secondary" id="btn-next-year">Next <i data-lucide="chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1.5rem; align-items: start;">
+          <div id="yearly-months-grid" class="yearly-months-grid">
+            <!-- Rendered dynamically as 12 month cards -->
+          </div>
+
+          <div class="kpi-card" id="yearly-total-pnl-card" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <span class="kpi-title" style="margin-bottom: 1rem;">Year Total P&L</span>
+            <div class="kpi-value" id="yearly-total-pnl-value" style="font-size: 2.2rem;">$0.00</div>
+            <div class="kpi-trend" id="yearly-total-pnl-trend" style="margin-top: 1rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS VIEW -->
+      <section id="section-settings" class="view-section">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>Centralized Settings</h1>
+            <p>Configure dynamic parameters and default commission rates.</p>
+          </div>
+        </div>
+
+        <div class="audit-card" style="max-width: 600px;">
+          <form id="form-settings" onsubmit="saveSettings(event)">
+            <div class="form-grid" style="grid-template-columns: 1fr; gap: 1.5rem;">
+              <div class="form-group">
+                <label for="settings-stock-comm">Stock Commission (per share)</label>
+                <div class="input-group">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="settings-stock-comm" class="form-control input-with-prefix" step="0.001" min="0" placeholder="0.00">
+                </div>
+                <small style="color: var(--text-dim);">Dynamic rate applied when logging standard stocks.</small>
+              </div>
+
+              <div class="form-group">
+                <label for="settings-option-comm">Option Commission (per contract)</label>
+                <div class="input-group">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="settings-option-comm" class="form-control input-with-prefix" step="0.01" min="0" placeholder="0.65">
+                </div>
+                <small style="color: var(--text-dim);">Dynamic rate applied per standard option contract (1 contract = 100 shares multiplier).</small>
+              </div>
+
+              <div style="margin-top: 1rem;">
+                <button type="submit" class="btn btn-success"><i data-lucide="save"></i> Save Settings</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- TRADE LOGGING MODAL -->
+  <div class="modal-overlay" id="modal-trade">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-trade-title">Log New Trade</h2>
+        <button class="btn-close" onclick="closeAddTradeModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form id="form-trade" onsubmit="saveTrade(event)">
+        <input type="hidden" id="trade-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            
+            <!-- Asset Class Type Switcher -->
+            <div class="form-group full-width">
+              <label>Asset Class</label>
+              <div class="form-toggle-buttons">
+                <div class="toggle-btn active" id="btn-asset-stock" onclick="setFormAsset('stock')">STOCK</div>
+                <div class="toggle-btn" id="btn-asset-option" onclick="setFormAsset('option')">OPTION</div>
+              </div>
+              <input type="hidden" id="trade-asset" value="stock">
+            </div>
+
+            <!-- Action Switcher (Buy/Sell) -->
+            <div class="form-group">
+              <label>Direction</label>
+              <div class="form-toggle-buttons">
+                <div class="toggle-btn buy active" id="btn-action-buy" onclick="setFormAction('buy')">BUY (LONG)</div>
+                <div class="toggle-btn sell" id="btn-action-sell" onclick="setFormAction('sell')">SELL (SHORT)</div>
+              </div>
+              <input type="hidden" id="trade-action" value="buy">
+            </div>
+
+            <!-- Ticker Symbol -->
+            <div class="form-group">
+              <label for="trade-symbol">Symbol / Ticker</label>
+              <input type="text" id="trade-symbol" class="form-control" placeholder="e.g. AAPL" required uppercase>
+            </div>
+
+            <!-- Option details (Conditional) -->
+            <div class="form-group option-field" style="display: none;">
+              <label for="trade-option-type">Option Type</label>
+              <select id="trade-option-type" class="form-control">
+                <option value="call">Call</option>
+                <option value="put">Put</option>
+              </select>
+            </div>
+
+            <div class="form-group option-field" style="display: none;">
+              <label for="trade-strike">Strike Price</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-strike" class="form-control input-with-prefix" placeholder="e.g. 150" step="0.5">
+              </div>
+            </div>
+
+            <div class="form-group option-field" style="display: none; grid-column: span 2;">
+              <label for="trade-expiry">Expiry Date</label>
+              <input type="date" id="trade-expiry" class="form-control">
+            </div>
+
+            <!-- Shared quantitative metrics -->
+            <div class="form-group">
+              <label for="trade-qty">Quantity</label>
+              <input type="number" id="trade-qty" class="form-control" placeholder="e.g. 10" min="1" step="any" required>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-entry-price">Entry Price</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-entry-price" class="form-control input-with-prefix" placeholder="e.g. 120.50" step="0.01" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-exit-price">Exit Price</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-exit-price" class="form-control input-with-prefix" placeholder="e.g. 132.00" step="0.01" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-stop-loss">Stop Loss (Risk control)</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-stop-loss" class="form-control input-with-prefix" placeholder="e.g. 115.00" step="0.01">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-fees">Fees & Commissions</label>
+              <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="trade-fees" class="form-control input-with-prefix" placeholder="0.00" step="0.01" value="0">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-date">Entry Date & Time</label>
+              <input type="datetime-local" id="trade-date" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-exit-date">Exit Date & Time</label>
+              <input type="datetime-local" id="trade-exit-date" class="form-control" required>
+            </div>
+
+            <!-- Setup Reason -->
+            <div class="form-group">
+              <label for="trade-strategy">Entry Reason / Setup</label>
+              <select id="trade-strategy" class="form-control">
+                <option value="Breakout">Breakout</option>
+                <option value="Pullback">Pullback</option>
+                <option value="Support/Resistance">Support & Resistance</option>
+                <option value="News/Catalyst">News or Catalyst</option>
+                <option value="Trend Following">Trend Following</option>
+                <option value="FOMO (No Setup)">FOMO / Ad-hoc Setup</option>
+              </select>
+            </div>
+
+            <!-- Psychology metrics -->
+            <div class="form-group">
+              <label for="trade-emotion-pre">Emotion Pre-Trade</label>
+              <select id="trade-emotion-pre" class="form-control">
+                <option value="Calm">Calm & Centered</option>
+                <option value="FOMO">FOMO / Impulsive</option>
+                <option value="Greed">Greedy / Impatient</option>
+                <option value="Fear">Anxious & Fearful</option>
+                <option value="Stressed">Tired or Stressed</option>
+                <option value="Neutral">Neutral</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-emotion-post">Emotion Post-Trade</label>
+              <select id="trade-emotion-post" class="form-control">
+                <option value="Calm">Satisfied & Controlled</option>
+                <option value="FOMO">Stressed / Disappointed</option>
+                <option value="Greed">Excited / Overconfident</option>
+                <option value="Fear">Regretful / Fearful</option>
+                <option value="Stressed">Relieved / Drained</option>
+                <option value="Neutral">Neutral</option>
+              </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group full-width">
+              <label for="trade-notes">Retrospective Notes / Thoughts</label>
+              <textarea id="trade-notes" class="form-control" rows="3" placeholder="Analyze your technical execution and mental state here..."></textarea>
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddTradeModal()">Cancel</button>
+          <button type="submit" class="btn btn-success" id="btn-save-submit">Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- IMPORT MODAL -->
+  <div class="modal-overlay" id="modal-import">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Import Trade Log (CSV / JSON)</h2>
+        <button class="btn-close" onclick="closeImportModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom: 1.5rem;">
+          Upload a <strong>CSV file</strong> (in the exact column format of the Excel Trade Log) or a <strong>JSON backup</strong> to sync your trading records.
+        </p>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="import-file-input">Select CSV or JSON File</label>
+          <input type="file" id="import-file-input" class="form-control" accept=".csv,.json" style="padding: 0.5rem;">
+        </div>
+
+        <div style="text-align: center; margin: 1rem 0; color: var(--text-dim); font-size: 0.8rem; font-weight: 600;">
+          — OR PASTE TEXT CONTENT —
+        </div>
+
+        <div class="form-group">
+          <textarea id="import-json-data" class="form-control" rows="6" placeholder="Paste raw CSV values or JSON data here..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="executeImport()">Import Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application core engine -->
+  <script src="app.js"></script>
+</body>
+</html>
